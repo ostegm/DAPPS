@@ -1,0 +1,56 @@
+//For launching web contracts
+geth --datadir ~/.ethereum/net14658 --networkid 14658 --rpc --rpcport 8545 --rpcaddr 0.0.0.0 --rpccorsdomain "*" --rpcapi "eth,web3" console
+//No web stuff
+geth --datadir ~/.ethereum/net14658 --networkid 14658 console
+//Attach 
+
+
+//Load script from file
+loadScript('/home/otto/DAPPS/notes/hellowWorld.js')
+//Then call functions from script
+checkAllbalances()
+
+
+var faucetSource = "pragma solidity ^0.4.0; contract Faucet { address owner; uint256 sendAmount; function Faucet() { owner = msg.sender; sendAmount = 1000000000000000000; } function getBalance() returns (uint) { return this.balance; } function getWei() returns (bool) { return msg.sender.send(sendAmount); } function sendWei(address toWhom) returns (bool) { return toWhom.send(sendAmount); } function getSendAmount() returns (uint256) { return sendAmount; } function killMe() returns (bool) { if (msg.sender == owner) { suicide(owner); return true; } } function () payable {} }";
+var faucetCompiled = web3.eth.compile.solidity(faucetSource);
+var faucetContract = web3.eth.contract(faucetCompiled.Faucet.info.abiDefinition);
+contractData = web3.eth.contract(faucetCompiled.Faucet.info.abiDefinition).new.getData({data: faucetCompiled.Faucet.code});
+var gasEstimate = web3.eth.estimateGas({data: contractData});
+
+var faucetContract = web3.eth.contract([{"constant":false,"inputs":[],"name":"getBalance","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[{"name":"toWhom","type":"address"}],"name":"sendWei","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"getWei","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"getSendAmount","outputs":[{"name":"","type":"uint256"}],"payable":false,"type":"function"},{"constant":false,"inputs":[],"name":"killMe","outputs":[{"name":"","type":"bool"}],"payable":false,"type":"function"},{"inputs":[],"payable":false,"type":"constructor"},{"payable":true,"type":"fallback"}]);
+var faucet = faucetContract.new(
+   {
+     from: web3.eth.accounts[0], 
+     data: '0x606060405234610000575b33600060006101000a81548173ffffffffffffffffffffffffffffffffffffffff02191690836c01000000000000000000000000908102040217905550670de0b6b3a76400006001819055505b5b610281806100666000396000f360606040523615610065576000357c01000000000000000000000000000000000000000000000000000000009004806312065fe01461006e578063148f2e5e146100915780633ba15036146100c457806390b08a52146100e9578063b603cd801461010c575b61006c5b5b565b005b346100005761007b610131565b6040518082815260200191505060405180910390f35b34610000576100ac6004808035906020019091905050610151565b60405180821515815260200191505060405180910390f35b34610000576100d1610195565b60405180821515815260200191505060405180910390f35b34610000576100f66101d7565b6040518082815260200191505060405180910390f35b34610000576101196101e2565b60405180821515815260200191505060405180910390f35b60003073ffffffffffffffffffffffffffffffffffffffff163190505b90565b60008173ffffffffffffffffffffffffffffffffffffffff166108fc6001549081150290604051809050600060405180830381858888f1935050505090505b919050565b60003373ffffffffffffffffffffffffffffffffffffffff166108fc6001549081150290604051809050600060405180830381858888f1935050505090505b90565b600060015490505b90565b6000600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff163373ffffffffffffffffffffffffffffffffffffffff16141561027d57600060009054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff16ff6001905061027e565b5b9056', 
+     gas: '4700000'
+   }, function (e, contract){
+    console.log(e, contract);
+    if (typeof contract.address !== 'undefined') {
+         console.log('Contract mined! address: ' + contract.address + ' transactionHash: ' + contract.transactionHash);
+    }
+ })
+
+//Addresses of the faucets I made
+var faucetAddress = "0xb14074cb5cb4b2c54da4f85386f94df0a73459dc" //net42
+var faucetAddress = "0xab243f8e270ea55f686e77d02742a291577d488e" //net14658
+
+
+//Create instance of the faucet for interacting
+var faucetInstance = faucetContract.at(faucetAddress);
+
+//Top up the faucet
+eth.sendTransaction({
+  from:eth.coinbase,
+  to:faucetAddress,
+  value:5000000000000000000
+});
+
+
+//Check balance of faucet
+web3.fromWei(faucetInstance.getBalance.call(), "ether");
+
+
+
+
+
+
